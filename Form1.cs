@@ -10,37 +10,31 @@ using System.Windows.Forms;
 using System.Data.SqlClient;
 using System.IO;
 using System.Threading;
+using System.Security.Policy;
 
 namespace InglesFerramenta {
     public partial class Form1 : Form {
-
+        Security srcSecurity;   
         SqlConnection connection;
         SqlCommand command;
         SqlDataAdapter adapter; 
 
         public Form1() {
             InitializeComponent();
-                connection = new SqlConnection(Environment.GetEnvironmentVariable("HKEY_CURRENT_USER\\Environment", EnvironmentVariableTarget.User));
-                command = new SqlCommand();
-                adapter = new SqlDataAdapter();
+                connection = new SqlConnection(Environment.GetEnvironmentVariable("HKEY_CURRENT_USER\\Environment", EnvironmentVariableTarget.User));             
+                srcSecurity = new Security();                        
         }
-
         private void btnCriar_Click(object sender, EventArgs e) {
             try {
                 connection.Open();
                 command.Connection = connection;
-                command.CommandText = "INSERT INTO USUARIO (NOME,IDETIFICADOR) VALUES (@NOME,@IDETIFICADOR)";
-                if(!string.IsNullOrEmpty(txtNomeCadastro.Text) && !string.IsNullOrEmpty(txtIdentificadorCadastro.Text)) {
+                command.CommandText = "INSERT INTO USUARIO (NOME,IDENTIFICADOR) VALUES (@NOME,@IDENTIFICADOR)";
+                if (!string.IsNullOrEmpty(txtNomeCadastro.Text) && !string.IsNullOrEmpty(txtIdentificadorCadastro.Text)) {
                     command.Parameters.AddWithValue("@NOME", txtNomeCadastro.Text.ToLower());
-                    command.Parameters.AddWithValue("@IDETIFICADOR", txtIdentificadorCadastro.Text.ToLower());
+                    command.Parameters.AddWithValue("@IDENTIFICADOR", srcSecurity.RetorneHash(txtIdentificadorCadastro.Text));
                     command.ExecuteNonQuery();
                     MessageBox.Show("Usuário Adicionado", "Adicionado");
                 }
-                else {
-                    MessageBox.Show("Preencha os campos vazios","Avviso");
-                }
-            
-
             } catch(SqlException ex) {
                 MessageBox.Show(ex.Message, "Erro SQL");
             } finally {
@@ -48,47 +42,48 @@ namespace InglesFerramenta {
                 command.Dispose();
                 txtIdentificadorCadastro.Text = "";
                 txtNomeCadastro.Text = "";
-            }
-
-
-
+            }        
         }
 
         private void btnEntrar_Click(object sender, EventArgs e) {
             try {
                 connection.Open();
-                command.Connection = connection;
-                command.CommandText = "SELECT NOME,IDETIFICADOR FROM USUARIO WHERE NOME = @NOME AND IDETIFICADOR = @COD";
-                if(!string.IsNullOrEmpty(txtNomeLogin.Text) && !string.IsNullOrEmpty(txtIdentificadoLogin.Text)) {
-                    command.Parameters.AddWithValue("@NOME", txtNomeLogin.Text);
-                    command.Parameters.AddWithValue("@COD", txtIdentificadoLogin.Text);
-                    command.ExecuteNonQuery();
-                    adapter.SelectCommand = command;
+                string query = "SELECT NOME,IDENTIFICADOR FROM USUARIO WHERE NOME = @NAME and IDENTIFICADOR=@COD";
+                command = new SqlCommand(query, connection);
+                if (!string.IsNullOrEmpty(txtNomeLogin.Text) && !string.IsNullOrEmpty(txtIdentificadoLogin.Text)) {
+                    command.Parameters.AddWithValue("@Name", txtNomeLogin.Text.ToLower());
+                    command.Parameters.AddWithValue("@cod", srcSecurity.RetorneHash(txtIdentificadoLogin.Text));
+                }else
+                { MessageBox.Show("Campos Vazios");
+                    return;
                 }
-                DataTable table =  new DataTable();
-                adapter.Fill(table);
-
-                foreach(DataRow row in table.Rows) {
-                    if (row["Nome"].ToString() == txtNomeLogin.Text.ToLower() && row["IDETIFICADOR"].ToString() == txtIdentificadoLogin.Text.ToLower())  {
+                SqlDataReader reader = command.ExecuteReader();             
+                if(reader.Read()) {
+                    string dtNome = reader.GetString(0);
+                    string dtSenha = reader.GetString(1);
+                    string input = srcSecurity.RetorneHash(txtIdentificadoLogin.Text);
+                    if (txtNomeLogin.Text == dtNome && input.Equals(dtSenha,StringComparison.OrdinalIgnoreCase)) {
                         Close();
-                        Thread form = new Thread(() => Application.Run(new FormPrincipal()));
-                        form.Start();   
+                        Thread thread = new Thread(() => Application.Run(new FormPrincipal()));
+                        thread.Start();
                     }
                     else {
-                        MessageBox.Show("eRRADO");
-                    }
-
-
-                }
-               
-                
-                
+                        MessageBox.Show("Senha Erradas", "Aviso");
+                        return;
+                    }                  
+                }                                                                    
             }catch(SqlException ex) {
                 MessageBox.Show(ex.Message);
             } finally {
                 connection.Close();
                 command.Dispose();
+                txtIdentificadoLogin.Text = "";
+                txtNomeLogin.Text = "";
             }
+        }
+
+        private void Form1_Load(object sender, EventArgs e) {
+           
         }
     }
 }

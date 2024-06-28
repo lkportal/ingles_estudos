@@ -37,7 +37,6 @@
             this.btnEntrar = new System.Windows.Forms.Button();
             this.txtIdentificadoLogin = new System.Windows.Forms.TextBox();
             this.txtNomeLogin = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
@@ -182,25 +181,17 @@
             this.txtNomeLogin.Size = new System.Drawing.Size(263, 29);
             this.txtNomeLogin.TabIndex = 0;
             // 
-            // label7
-            // 
-            this.label7.Location = new System.Drawing.Point(24, 406);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(764, 35);
-            this.label7.TabIndex = 2;
-            this.label7.Text = "label7";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.label7);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
             this.Name = "Form1";
             this.Text = "Home";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.panel2.ResumeLayout(false);
@@ -225,7 +216,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label label7;
     }
 }
 
